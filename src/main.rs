@@ -1,6 +1,8 @@
-use clap::Parser;
-use std::process::Command;
+use clap::{Arg, Command, Parser};
+use std::process::Command as exec;
 use glob::glob;
+use ansi_term::Style;
+use ansi_term::Colour::Red;
 
 
 #[derive(Parser)]
@@ -11,15 +13,68 @@ struct Cli {
 
 
 fn main() {
-    let args: Cli = Cli::parse();
+    let matches = Command::new("Maker")
+        .author("finxol")
+        .about("Easily run a java project")
+        .arg(
+            Arg::new("verbose")
+                .help("Run in verbose mode")
+                .takes_value(false)
+                .short("v".parse().unwrap())
+                .long("verbose")
+                .global(true),
+        )
+        .subcommand(
+            Command::new("run")
+                .about("Run the application or a specific class")
+                .subcommand_value_name("file")
+                .subcommand_help_heading("RUN")
+                .arg(
+                    Arg::new("file")
+                        .long("file")
+                        .help("Install hardlinks for all subcommands in path")
+                        .exclusive(true)
+                        .takes_value(true)
+                        .default_missing_value("modele.ScenarioDonnee")
+                        .use_value_delimiter(false),
+                )
+        )
+        .get_matches();
 
+    let subcommand = matches.subcommand();
+    let verbose: bool = matches.is_present("verbose");
+    match subcommand {
+        Some(("run", _)) => {
+            let args = matches.subcommand_matches("run").unwrap();
+            let mut file = "modele.ScenarioDonnee";
+            if args.is_present("file") {
+                file = args.values_of("file").unwrap().next().unwrap();
+                println!("{}", file);
+
+            }
+            run(verbose, file);
+        },
+        Some(("build", _)) => {
+            build(verbose);
+        },
+        Some(("doc", _)) => {
+            doc();
+        },
+        Some(("", _)) => {
+            eprintln!("{}", Red.paint("No command specified, try --help"));
+        },
+        _ => {
+            println!();
+        }
+    }
+/*
     if args.action.is_some() {
         let arg: String = args.action.unwrap();
         if arg == "run" {
             run();
 
         } else if arg == "build" {
-            build();
+            build(true);
 
         } else if arg == "doc" {
             doc();
@@ -29,48 +84,52 @@ fn main() {
         }
     } else {
         println!("Unrecognized action, try --help");
-    }
+    }*/
 }
 
-fn run() {
-    build();
+fn run(v: bool, file: &str) {
+    build(v);
 
-    let file: &str = "modele.ScenarioDonnee";
+    println!("verbose: {}", v);
 
-    println!("[+] Running {}", &file);
+    let str: String = format!("[+] Running {}", &file);
+    println!("{}", Style::new().bold().paint(str));
 
-    let out = Command::new("java")
+    let out = exec::new("java")
         .arg("-classpath")
         .arg("class/")
         .arg(file)
         .output()
-        .expect("[!] Failes to compile");
+        .expect("[!] Failed to compile");
 
     println!("{}", String::from_utf8_lossy(&out.stdout));
-    eprintln!("{}", String::from_utf8_lossy(&out.stderr));
+    eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
 }
 
-fn build() {
+fn build(verbose: bool) {
     let enums: Vec<&str> = vec!["ContenuNid", "EspeceBatracien", "EspeceChouette", "EspeceHippocampe", "EspeceObservee", "IndiceLoutre", "Peche", "Sexe", "TypeObservation"];
     let venums: Vec<String> = enums.iter().map(|x| format!("./src/modele/donnee/{}.java", x)).collect();
 
     let files: Vec<String> = read_dir("./src/**/*.java");
 
+    let str: String = format!("[+] Building {} {}", &venums.join(" "), &files.join(" "));
+    println!("{}", Style::new().bold().paint(str));
 
-    println!("[+] Building {} {}", &venums.join(" "), &files.join(" "));
-
-    let out = Command::new("javac")
+    let out = exec::new("javac")
         .arg("-classpath")
         .arg("class/")
         .arg("-d")
         .arg("class/")
+        .arg("-encoding")
+        .arg("UTF-8")
         .args(venums)
         .args(files)
+        .arg(if verbose { "-verbose" } else { "" })
         .output()
-        .expect("[!] Failes to compile");
+        .expect("[!] Failed to compile");
 
     println!("{}", String::from_utf8_lossy(&out.stdout));
-    eprintln!("{}", String::from_utf8_lossy(&out.stderr));
+    eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
 }
 
 fn doc() {
@@ -78,20 +137,18 @@ fn doc() {
 
     println!("[+] Javadoc {}", &files.join(" "));
 
-    let out = Command::new("javadoc")
+    let out = exec::new("javadoc")
         .arg("-d")
         .arg("doc/")
-        .arg("-charset")
-        .arg("UTF-8")
         .arg("-classpath")
         .arg("class/")
         .arg("-author")
         .args(files)
         .output()
-        .expect("[!] Failes to compile");
+        .expect("[!] Failed to compile");
 
     println!("{}", String::from_utf8_lossy(&out.stdout));
-    eprintln!("{}", String::from_utf8_lossy(&out.stderr));
+    eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
 }
 
 
