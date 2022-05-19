@@ -67,24 +67,6 @@ fn main() {
             println!();
         }
     }
-/*
-    if args.action.is_some() {
-        let arg: String = args.action.unwrap();
-        if arg == "run" {
-            run();
-
-        } else if arg == "build" {
-            build(true);
-
-        } else if arg == "doc" {
-            doc();
-
-        } else {
-            println!("Unrecognized action: {}, try --help", arg);
-        }
-    } else {
-        println!("Unrecognized action, try --help");
-    }*/
 }
 
 fn run(v: bool, file: &str) {
@@ -108,7 +90,7 @@ fn run(v: bool, file: &str) {
 
 fn build(verbose: bool) {
     let enums: Vec<&str> = vec!["ContenuNid", "EspeceBatracien", "EspeceChouette", "EspeceHippocampe", "EspeceObservee", "IndiceLoutre", "Peche", "Sexe", "TypeObservation"];
-    let venums: Vec<String> = enums.iter().map(|x| format!("./src/modele/donnee/{}.java", x)).collect();
+    let venums: Vec<String> = enums.iter().map(|x| format!("src/modele/donnee/{}.java", x)).collect();
 
     let files: Vec<String> = read_dir("./src/**/*.java");
 
@@ -124,7 +106,7 @@ fn build(verbose: bool) {
         .arg("UTF-8")
         .args(venums)
         .args(files)
-        .arg(if verbose { "-verbose" } else { "" })
+        .arg(if verbose { "-verbose" } else { "-Xdoclint" })
         .output()
         .expect("[!] Failed to compile");
 
