@@ -39,6 +39,16 @@ fn main() {
                         .use_value_delimiter(false),
                 )
         )
+        .subcommand(
+            Command::new("build")
+                .about("Build the application")
+                .subcommand_help_heading("BUILD")
+        )
+        .subcommand(
+            Command::new("doc")
+                .about("Generate documentation")
+                .subcommand_help_heading("DOC")
+        )
         .get_matches();
 
     let subcommand = matches.subcommand();
@@ -106,7 +116,7 @@ fn build(verbose: bool) {
         .arg("UTF-8")
         .args(venums)
         .args(files)
-        .arg(if verbose { "-verbose" } else { "-Xdoclint" })
+        .arg(if verbose { "-verbose" } else { "-Xdoclint:none" })
         .output()
         .expect("[!] Failed to compile");
 
