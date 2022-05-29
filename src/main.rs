@@ -32,7 +32,7 @@ fn main() {
                 .arg(
                     Arg::new("file")
                         .long("file")
-                        .help("Install hardlinks for all subcommands in path")
+                        .help("Specify which file to run")
                         .exclusive(true)
                         .takes_value(true)
                         .default_missing_value("modele.ScenarioDonnee")
@@ -59,8 +59,6 @@ fn main() {
             let mut file = "modele.ScenarioDonnee";
             if args.is_present("file") {
                 file = args.values_of("file").unwrap().next().unwrap();
-                println!("{}", file);
-
             }
             run(verbose, file);
         },
@@ -79,39 +77,23 @@ fn main() {
     }
 }
 
-fn run(v: bool, file: &str) {
-    build(v);
-
-    println!("verbose: {}", v);
-
-    let str: String = format!("[+] Running {}", &file);
-    println!("{}", Style::new().bold().paint(str));
-
-    let out = exec::new("java")
-        .arg("-classpath")
-        .arg("class/")
-        .arg(file)
-        .output()
-        .expect("[!] Failed to compile");
-
-    println!("{}", String::from_utf8_lossy(&out.stdout));
-    eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
-}
-
 fn build(verbose: bool) {
     let enums: Vec<&str> = vec!["ContenuNid", "EspeceBatracien", "EspeceChouette", "EspeceHippocampe", "EspeceObservee", "IndiceLoutre", "Peche", "Sexe", "TypeObservation"];
     let venums: Vec<String> = enums.iter().map(|x| format!("src/modele/donnee/{}.java", x)).collect();
 
     let files: Vec<String> = read_dir("./src/**/*.java");
 
-    let str: String = format!("[+] Building {} {}", &venums.join(" "), &files.join(" "));
-    println!("{}", Style::new().bold().paint(str));
+    println!("{} {} {}", Style::new().bold().paint("[+] Building: "), &venums.join(", "), &files.join(", "));
 
     let out = exec::new("javac")
         .arg("-classpath")
         .arg("class/")
         .arg("-d")
         .arg("class/")
+        .arg("--module-path")
+        .arg("lib/")
+        .arg("--add-modules")
+        .arg("javafx.controls")
         .arg("-encoding")
         .arg("UTF-8")
         .args(venums)
@@ -124,10 +106,32 @@ fn build(verbose: bool) {
     eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
 }
 
+fn run(v: bool, file: &str) {
+    build(v);
+
+    println!("verbose: {}", v);
+
+    println!("{} {}", Style::new().bold().paint("[+] Running: "), &file);
+
+    let out = exec::new("java")
+        .arg("-classpath")
+        .arg("class/")
+        .arg("--module-path")
+        .arg("lib/")
+        .arg("--add-modules")
+        .arg("javafx.controls")
+        .arg(file)
+        .output()
+        .expect("[!] Failed to compile");
+
+    println!("{}", String::from_utf8_lossy(&out.stdout));
+    eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
+}
+
 fn doc() {
     let files: Vec<String> = read_dir("./src/**/*.java");
 
-    println!("[+] Javadoc {}", &files.join(" "));
+    println!("{} {}", Style::new().bold().paint("[+] Javadoc: "), &files.join(" "));
 
     let out = exec::new("javadoc")
         .arg("-d")
