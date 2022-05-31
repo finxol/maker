@@ -1,8 +1,8 @@
+use std::path::Path;
 use clap::{Arg, Command, Parser};
 use std::process::Command as exec;
 use glob::glob;
-use ansi_term::Style;
-use ansi_term::Colour::Red;
+use ansi_term::{Style, Colour::Red};
 
 
 #[derive(Parser)]
@@ -51,6 +51,7 @@ fn main() {
         )
         .get_matches();
 
+    let lib: String = get_lib_path();
     let subcommand = matches.subcommand();
     let verbose: bool = matches.is_present("verbose");
     match subcommand {
@@ -60,10 +61,10 @@ fn main() {
             if args.is_present("file") {
                 file = args.values_of("file").unwrap().next().unwrap();
             }
-            run(verbose, file);
+            run(verbose, file, &lib);
         },
         Some(("build", _)) => {
-            build(verbose);
+            build(verbose, &lib);
         },
         Some(("doc", _)) => {
             doc();
@@ -77,7 +78,7 @@ fn main() {
     }
 }
 
-fn build(verbose: bool) {
+fn build(verbose: bool, lib: &String) {
     let enums: Vec<&str> = vec!["ContenuNid", "EspeceBatracien", "EspeceChouette", "EspeceHippocampe", "EspeceObservee", "IndiceLoutre", "Peche", "Sexe", "TypeObservation"];
     let venums: Vec<String> = enums.iter().map(|x| format!("src/modele/donnee/{}.java", x)).collect();
 
@@ -91,9 +92,9 @@ fn build(verbose: bool) {
         .arg("-d")
         .arg("class/")
         .arg("--module-path")
-        .arg("lib/")
+        .arg(lib)
         .arg("--add-modules")
-        .arg("javafx.controls")
+        .arg("javafx.base,javafx.controls,javafx.graphics")
         .arg("-encoding")
         .arg("UTF-8")
         .args(venums)
@@ -106,8 +107,8 @@ fn build(verbose: bool) {
     eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
 }
 
-fn run(v: bool, file: &str) {
-    build(v);
+fn run(v: bool, file: &str, lib: &String) {
+    build(v, lib);
 
     println!("verbose: {}", v);
 
@@ -117,12 +118,12 @@ fn run(v: bool, file: &str) {
         .arg("-classpath")
         .arg("class/")
         .arg("--module-path")
-        .arg("lib/")
+        .arg(lib)
         .arg("--add-modules")
-        .arg("javafx.controls")
+        .arg("javafx.base,javafx.controls,javafx.graphics")
         .arg(file)
         .output()
-        .expect("[!] Failed to compile");
+        .expect(format!("[!] Failed to run {}", file).as_str());
 
     println!("{}", String::from_utf8_lossy(&out.stdout));
     eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
@@ -159,4 +160,15 @@ fn read_dir(dir: &str) -> Vec<String> {
     }
 
     files
+}
+
+fn get_lib_path() -> String {
+    let mut path: String = "lib/lib".to_string();
+
+    if !cfg!(target_os = "windows") {
+        assert!(Path::new("/usr/lib/jvm/openjfx").exists(), "OpenJFX not found");
+        path = "/usr/lib/jvm/openjfx".to_string();
+    }
+
+    path
 }
