@@ -94,7 +94,7 @@ fn build(verbose: bool, lib: &String) {
         .arg("--module-path")
         .arg(lib)
         .arg("--add-modules")
-        .arg("javafx.base,javafx.controls,javafx.graphics")
+        .arg("javafx.base,javafx.controls,javafx.graphics,javafx.fxml,javafx.media,javafx.swing,javafx.web")
         .arg("-encoding")
         .arg("UTF-8")
         .args(venums)
@@ -120,7 +120,7 @@ fn run(v: bool, file: &str, lib: &String) {
         .arg("--module-path")
         .arg(lib)
         .arg("--add-modules")
-        .arg("javafx.base,javafx.controls,javafx.graphics")
+        .arg("javafx.base,javafx.controls,javafx.graphics,javafx.fxml,javafx.media,javafx.swing,javafx.web")
         .arg(file)
         .output()
         .expect(format!("[!] Failed to run {}", file).as_str());
