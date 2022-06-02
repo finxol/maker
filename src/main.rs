@@ -88,7 +88,7 @@ fn build(verbose: bool, lib: &String) {
 
     let out = exec::new("javac")
         .arg("-classpath")
-        .arg("class;lib/mysql-connector-java-8.0.29.jar")
+        .arg(get_classpath())
         .arg("-d")
         .arg("class/")
         .arg("--module-path")
@@ -116,7 +116,7 @@ fn run(v: bool, file: &str, lib: &String) {
 
     let out = exec::new("java")
         .arg("-classpath")
-        .arg("class;lib/mysql-connector-java-8.0.29.jar")
+        .arg(get_classpath())
         .arg("--module-path")
         .arg(lib)
         .arg("--add-modules")
@@ -138,7 +138,7 @@ fn doc() {
         .arg("-d")
         .arg("doc/")
         .arg("-classpath")
-        .arg("class/")
+        .arg(get_classpath())
         .arg("-author")
         .args(files)
         .output()
@@ -168,6 +168,16 @@ fn get_lib_path() -> String {
     if !cfg!(target_os = "windows") {
         assert!(Path::new("/usr/lib/jvm/openjfx").exists(), "OpenJFX not found");
         path = "/usr/lib/jvm/openjfx".to_string();
+    }
+
+    path
+}
+
+fn get_classpath() -> String {
+    let mut path: String = "class;lib\\mysql-connector-java-8.0.29.jar".to_string();
+
+    if !cfg!(target_os = "windows") {
+        path = "class:lib/mysql-connector-java-8.0.29.jar".to_string();
     }
 
     path
