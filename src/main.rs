@@ -88,7 +88,7 @@ fn build(verbose: bool, lib: &String) {
 
     let out = exec::new("javac")
         .arg("-classpath")
-        .arg("class/")
+        .arg("class;lib/mysql-connector-java-8.0.29.jar")
         .arg("-d")
         .arg("class/")
         .arg("--module-path")
@@ -116,7 +116,7 @@ fn run(v: bool, file: &str, lib: &String) {
 
     let out = exec::new("java")
         .arg("-classpath")
-        .arg("class/")
+        .arg("class;lib/mysql-connector-java-8.0.29.jar")
         .arg("--module-path")
         .arg(lib)
         .arg("--add-modules")
