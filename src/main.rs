@@ -35,7 +35,7 @@ fn main() {
                         .help("Specify which file to run")
                         .exclusive(true)
                         .takes_value(true)
-                        .default_missing_value("modele.ScenarioDonnee")
+                        .default_missing_value("vue.Login")
                         .use_value_delimiter(false),
                 )
         )
@@ -57,7 +57,7 @@ fn main() {
     match subcommand {
         Some(("run", _)) => {
             let args = matches.subcommand_matches("run").unwrap();
-            let mut file = "modele.ScenarioDonnee";
+            let mut file = "vue.Login";
             if args.is_present("file") {
                 file = args.values_of("file").unwrap().next().unwrap();
             }
@@ -79,6 +79,7 @@ fn main() {
 }
 
 fn build(verbose: bool, lib: &String) {
+    // Get all the .java files and compile them
     let enums: Vec<&str> = vec!["ContenuNid", "EspeceBatracien", "EspeceChouette", "EspeceHippocampe", "EspeceObservee", "IndiceLoutre", "Peche", "Sexe", "TypeObservation"];
     let venums: Vec<String> = enums.iter().map(|x| format!("src/modele/donnee/{}.java", x)).collect();
 
@@ -102,6 +103,27 @@ fn build(verbose: bool, lib: &String) {
         .arg(if verbose { "-verbose" } else { "-Xdoclint:none" })
         .output()
         .expect("[!] Failed to compile");
+
+    println!("{}", String::from_utf8_lossy(&out.stdout));
+    eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
+
+    if !out.status.success() {
+        eprintln!("{}", Style::new().bold().paint("[!] Build failed"));
+        panic!();
+    }
+
+
+    // Get all the complementary files (.fxml, .css) and copy them to the class dir
+    let mut comp_files: Vec<String> = read_dir("./src/**/*.fxml");
+    comp_files.append(&mut read_dir("./src/**/*.css"));
+
+    println!("{} {} {}", Style::new().bold().paint("[+] Copying: "), &comp_files.join(", "), "to class");
+
+    let out = exec::new("cp")
+        .args(comp_files)
+        .arg("class/vue")
+        .output()
+        .expect("[!] Failed to copy class files");
 
     println!("{}", String::from_utf8_lossy(&out.stdout));
     eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
