@@ -1,6 +1,6 @@
 use std::path::Path;
 use clap::{Arg, Command, Parser};
-use std::process::Command as exec;
+use std::process::{Command as exec, Output};
 use glob::glob;
 use ansi_term::{Style, Colour::Red};
 
@@ -119,14 +119,7 @@ fn build(verbose: bool, lib: &String) {
 
     println!("{} {} {}", Style::new().bold().paint("[+] Copying: "), &comp_files.join(", "), "to class");
 
-    let out = exec::new("cp")
-        .args(comp_files)
-        .arg("class/vue")
-        .output()
-        .expect("[!] Failed to copy class files");
-
-    println!("{}", String::from_utf8_lossy(&out.stdout));
-    eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
+    copy_files();
 }
 
 fn run(v: bool, file: &str, lib: &String) {
@@ -203,4 +196,32 @@ fn get_classpath() -> String {
     }
 
     path
+}
+
+fn copy_files() {
+    let mut comp_files: Vec<String> = read_dir("./src/**/*.fxml");
+    comp_files.append(&mut read_dir("./src/**/*.css"));
+
+    if !cfg!(target_os = "windows") {
+        let out:Output = exec::new("cp")
+            .args(comp_files)
+            .arg("class/vue")
+            .output()
+            .expect("[!] Failed to copy class files");
+
+        println!("{}", String::from_utf8_lossy(&out.stdout));
+        eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
+
+    } else {
+        for file in comp_files {
+            let out: Output = exec::new("copy")
+                .arg(&file)
+                .arg("class/vue")
+                .output()
+                .expect("[!] Failed to copy class files");
+
+            println!("{}", String::from_utf8_lossy(&out.stdout));
+            eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
+        }
+    };
 }
