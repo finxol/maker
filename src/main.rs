@@ -201,7 +201,12 @@ fn copy_files() {
     println!("{} {} {}", Style::new().bold().paint("[+] Copying: "), &comp_files.join(", "), "to class");
 
     for file in comp_files {
-        let f = file.split("/").collect::<Vec<&str>>();
+        let split_char = if !cfg!(target_os = "windows") {
+            "/"
+        } else {
+            "\\"
+        };
+        let f = file.split(split_char).collect::<Vec<&str>>();
         let f = if !cfg!(target_os = "windows") {
             format!("class/vue/{}", f[f.len() - 1])
         } else {
