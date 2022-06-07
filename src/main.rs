@@ -114,11 +114,6 @@ fn build(verbose: bool, lib: &String) {
 
 
     // Get all the complementary files (.fxml, .css) and copy them to the class dir
-    let mut comp_files: Vec<String> = read_dir("./src/**/*.fxml");
-    comp_files.append(&mut read_dir("./src/**/*.css"));
-
-    println!("{} {} {}", Style::new().bold().paint("[+] Copying: "), &comp_files.join(", "), "to class");
-
     copy_files();
 }
 
@@ -202,23 +197,26 @@ fn copy_files() {
     let mut comp_files: Vec<String> = read_dir("./src/**/*.fxml");
     comp_files.append(&mut read_dir("./src/**/*.css"));
 
+    println!("{} {} {}", Style::new().bold().paint("[+] Copying: "), &comp_files.join(", "), "to class");
+
     if !cfg!(target_os = "windows") {
         let out:Output = exec::new("cp")
             .args(comp_files)
             .arg("class/vue")
             .output()
-            .expect("[!] Failed to copy class files");
+            .expect("[!] Failed to copy complementary files (not windows)");
 
         println!("{}", String::from_utf8_lossy(&out.stdout));
         eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
 
     } else {
         for file in comp_files {
+            println!("{}", file);
             let out: Output = exec::new("copy")
                 .arg(&file)
-                .arg("class/vue")
+                .arg("class\\vue")
                 .output()
-                .expect("[!] Failed to copy class files");
+                .expect("[!] Failed to copy complementary files (windows)");
 
             println!("{}", String::from_utf8_lossy(&out.stdout));
             eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
