@@ -185,10 +185,10 @@ fn get_lib_path() -> String {
 }
 
 fn get_classpath() -> String {
-    let mut path: String = "class;lib\\mysql-connector-java-8.0.29.jar".to_string();
+    let mut path: String = "class;lib\\mysql-connector-java-8.0.29.jar;lib\\spring-security-crypto-5.7.1.jar".to_string();
 
     if !cfg!(target_os = "windows") {
-        path = "class:lib/mysql-connector-java-8.0.29.jar".to_string();
+        path = "class:lib/mysql-connector-java-8.0.29.jar:lib/spring-security-crypto-5.7.1.jar".to_string();
     }
 
     path
@@ -201,17 +201,15 @@ fn copy_files() {
     println!("{} {} {}", Style::new().bold().paint("[+] Copying: "), &comp_files.join(", "), "to class");
 
     for file in comp_files {
-        let split_char = if !cfg!(target_os = "windows") {
-            "/"
-        } else {
-            "\\"
-        };
+        let split_char = if !cfg!(target_os = "windows") { "/" } else { "\\" };
         let f = file.split(split_char).collect::<Vec<&str>>();
+
         let f = if !cfg!(target_os = "windows") {
             format!("class/vue/{}", f[f.len() - 1])
         } else {
             format!("class\\vue\\{}", f[f.len() - 1])
         };
+
         fs::copy(&file, &f)
             .expect(&*format!("Error copying file {} to {}", &file, &f));
     }
