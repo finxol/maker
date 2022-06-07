@@ -1,8 +1,9 @@
 use std::path::Path;
 use clap::{Arg, Command, Parser};
-use std::process::{Command as exec, Output};
+use std::process::{Command as exec};
 use glob::glob;
 use ansi_term::{Style, Colour::Red};
+use std::fs;
 
 
 #[derive(Parser)]
@@ -199,27 +200,16 @@ fn copy_files() {
 
     println!("{} {} {}", Style::new().bold().paint("[+] Copying: "), &comp_files.join(", "), "to class");
 
-    if !cfg!(target_os = "windows") {
-        let out:Output = exec::new("cp")
-            .args(comp_files)
-            .arg("class/vue")
-            .output()
-            .expect("[!] Failed to copy complementary files (not windows)");
+    for file in comp_files {
+        let f = file.split("/").collect::<Vec<&str>>();
+        let f = if !cfg!(target_os = "windows") {
+            format!("class/vue/{}", f[f.len() - 1])
+        } else {
+            format!("class\\vue\\{}", f[f.len() - 1])
+        };
+        fs::copy(&file, &f)
+            .expect(&*format!("Error copying file {} to {}", &file, &f));
+    }
 
-        println!("{}", String::from_utf8_lossy(&out.stdout));
-        eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
-
-    } else {
-        for file in comp_files {
-            println!("{}", file);
-            let out: Output = exec::new("copy")
-                .arg(&file)
-                .arg("class\\vue")
-                .output()
-                .expect("[!] Failed to copy complementary files (windows)");
-
-            println!("{}", String::from_utf8_lossy(&out.stdout));
-            eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
-        }
-    };
+    println!();
 }
