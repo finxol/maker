@@ -55,17 +55,17 @@ fn main() {
     let lib: String = get_lib_path();
     let subcommand = matches.subcommand();
     let verbose: bool = matches.is_present("verbose");
+    let mut file: String = "".to_string();
     match subcommand {
         Some(("run", _)) => {
             let args = matches.subcommand_matches("run").unwrap();
-            let mut file = "vue.Login";
             if args.is_present("file") {
-                file = args.values_of("file").unwrap().next().unwrap();
+                file = args.values_of("file").unwrap().next().unwrap().parse().unwrap();
             }
-            run(verbose, file, &lib);
+            run(verbose, &file, &lib);
         },
         Some(("build", _)) => {
-            build(verbose, &lib);
+            build(verbose, &lib, &file);
         },
         Some(("doc", _)) => {
             doc();
@@ -79,14 +79,21 @@ fn main() {
     }
 }
 
-fn build(verbose: bool, lib: &String) {
+fn build(verbose: bool, lib: &String, file: &String) {
     // Get all the .java files and compile them
     let enums: Vec<&str> = vec!["ContenuNid", "EspeceBatracien", "EspeceChouette", "EspeceHippocampe", "EspeceObservee", "IndiceLoutre", "Peche", "Sexe", "TypeObservation"];
-    let venums: Vec<String> = enums.iter().map(|x| format!("src/modele/donnee/{}.java", x)).collect();
+    let mut venums: Vec<String> = enums.iter().map(|x| format!("src/modele/donnee/{}.java", x)).collect();
 
-    let files: Vec<String> = read_dir("./src/**/*.java");
+    let mut files: Vec<String>;
+    if file == "" {
+        files = vec![];
+        files.append(&mut venums);
+        files.append(&mut read_dir("./src/**/*.java"));
+    } else {
+        files = vec![file.to_owned()];
+    }
 
-    println!("{} {} {}", Style::new().bold().paint("[+] Building: "), &venums.join(", "), &files.join(", "));
+    println!("{} {}", Style::new().bold().paint("[+] Building: "), &files.join(", "));
 
     let out = exec::new("javac")
         .arg("-classpath")
@@ -99,7 +106,6 @@ fn build(verbose: bool, lib: &String) {
         .arg("javafx.base,javafx.controls,javafx.graphics,javafx.fxml,javafx.media,javafx.swing,javafx.web")
         .arg("-encoding")
         .arg("UTF-8")
-        .args(venums)
         .args(files)
         .arg(if verbose { "-verbose" } else { "-Xdoclint:none" })
         .output()
@@ -118,12 +124,20 @@ fn build(verbose: bool, lib: &String) {
     copy_files();
 }
 
-fn run(v: bool, file: &str, lib: &String) {
-    build(v, lib);
+fn run(v: bool, file: &String, lib: &String) {
+    let mut file = file.replace(".", "/");
+    if file != "" {
+        file = format!("src/{}.java", file)
+    }
+    build(v, lib, &file);
 
-    println!("verbose: {}", v);
+    let run_file = if file == "" {
+        "vue.Login".to_string()
+    } else {
+        file
+    };
 
-    println!("{} {}", Style::new().bold().paint("[+] Running: "), &file);
+    println!("{} {}", Style::new().bold().paint("[+] Running: "), &run_file);
 
     let out = exec::new("java")
         .arg("-classpath")
@@ -132,9 +146,9 @@ fn run(v: bool, file: &str, lib: &String) {
         .arg(lib)
         .arg("--add-modules")
         .arg("javafx.base,javafx.controls,javafx.graphics,javafx.fxml,javafx.media,javafx.swing,javafx.web")
-        .arg(file)
+        .arg(&run_file)
         .output()
-        .expect(format!("[!] Failed to run {}", file).as_str());
+        .expect(format!("[!] Failed to run {}", &run_file).as_str());
 
     println!("{}", String::from_utf8_lossy(&out.stdout));
     eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
