@@ -94,7 +94,9 @@ fn build(verbose: bool, lib: &String, file: &String) {
         files = vec![format_filename(file)];
         if file.starts_with("vue.") {
             let controller: String = format!("src/controleur/{}Controller.java", file.split(".").last().unwrap());
-            files.push(controller);
+            if Path::new(&controller).exists() {
+                files.push(controller);
+            }
         }
     }
 
@@ -192,7 +194,7 @@ fn get_lib_path() -> String {
     let mut path: String = "lib/lib".to_string();
 
     if !cfg!(target_os = "windows") {
-        assert!(Path::new("/usr/lib/jvm/openjfx").exists(), "OpenJFX not found");
+        assert!(Path::new("/usr/lib/jvm/openjfx").exists(), "OpenJFX not found. Please install openjfx-devel.");
         path = "/usr/lib/jvm/openjfx".to_string();
     }
 
