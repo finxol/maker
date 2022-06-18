@@ -33,6 +33,7 @@ fn main() {
                 .arg(
                     Arg::new("file")
                         .long("file")
+                        .short("f".parse().unwrap())
                         .help("Specify which file to run")
                         .exclusive(true)
                         .takes_value(true)
@@ -90,7 +91,11 @@ fn build(verbose: bool, lib: &String, file: &String) {
         files.append(&mut venums);
         files.append(&mut read_dir("./src/**/*.java"));
     } else {
-        files = vec![file.to_owned()];
+        files = vec![format_filename(file)];
+        if file.starts_with("vue.") {
+            let controller: String = format!("src/controleur/{}Controller.java", file.split(".").last().unwrap());
+            files.push(controller);
+        }
     }
 
     println!("{} {}", Style::new().bold().paint("[+] Building: "), &files.join(", "));
@@ -125,16 +130,12 @@ fn build(verbose: bool, lib: &String, file: &String) {
 }
 
 fn run(v: bool, file: &String, lib: &String) {
-    let mut file = file.replace(".", "/");
-    if file != "" {
-        file = format!("src/{}.java", file)
-    }
     build(v, lib, &file);
 
     let run_file = if file == "" {
         "vue.Login".to_string()
     } else {
-        file
+        format_filename(file)
     };
 
     println!("{} {}", Style::new().bold().paint("[+] Running: "), &run_file);
@@ -206,6 +207,14 @@ fn get_classpath() -> String {
     }
 
     path
+}
+
+fn format_filename(file: &String) -> String {
+    let mut file: String = file.replace(".", "/");
+    if file != "" {
+        file = format!("src/{}.java", file)
+    }
+    file
 }
 
 fn copy_files() {
