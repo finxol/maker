@@ -135,7 +135,7 @@ fn run(v: bool, file: &String, lib: &String) {
     build(v, lib, &file);
 
     let run_file = if file == "" {
-        "vue.Login".to_string()
+        "controleur.Main".to_string()
     } else {
         format_filename(file)
     };
