@@ -1,6 +1,6 @@
 use std::path::Path;
 use clap::{Arg, Command, Parser};
-use std::process::{Command as exec};
+use std::process::{Command as exec, exit};
 use glob::glob;
 use ansi_term::{Style, Colour::Red};
 use std::fs;
@@ -123,7 +123,7 @@ fn build(verbose: bool, lib: &String, file: &String) {
 
     if !out.status.success() {
         eprintln!("{}", Style::new().bold().paint("[!] Build failed"));
-        panic!();
+        exit(1);
     }
 
 
