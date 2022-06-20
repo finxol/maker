@@ -202,10 +202,10 @@ fn get_lib_path() -> String {
 }
 
 fn get_classpath() -> String {
-    let mut path: String = "class;lib\\mysql-connector-java-8.0.29.jar;lib\\spring-security-crypto-5.7.1.jar".to_string();
+    let mut path: String = "class;lib\\mysql-connector-java-8.0.29.jar;lib\\annotations-20.1.0.jar".to_string();
 
     if !cfg!(target_os = "windows") {
-        path = "class:lib/mysql-connector-java-8.0.29.jar:lib/spring-security-crypto-5.7.1.jar".to_string();
+        path = "class:lib/mysql-connector-java-8.0.29.jar:lib/annotations-20.1.0.jar".to_string();
     }
 
     path
