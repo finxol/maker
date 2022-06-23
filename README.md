@@ -7,6 +7,10 @@ It is tested on Linux and Windows.
 
 Initially made for [augustin-pasq/SAE-PNR](https://github.com/augustin-pasq/SAE-PNR)
 
+## Download pre-built binaries
+
+You can find prebuilt binaries for Linux and Windows in the [releases'](https://github.com/finxol/maker/releases) section on github.
+
 ## Build from source
 
 To compile Maker, simply run
