@@ -1,10 +1,10 @@
-use std::path::Path;
-use clap::{Arg, Command, Parser};
-use std::process::{Command as exec, exit};
-use glob::glob;
-use ansi_term::{Style, Colour::Red};
 use std::fs;
+use std::path::Path;
+use std::process::{Command as exec, exit};
 
+use ansi_term::{Colour::Red, Style};
+use clap::{Arg, Command, Parser};
+use glob::glob;
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -51,6 +51,11 @@ fn main() {
                 .about("Generate documentation")
                 .subcommand_help_heading("DOC")
         )
+        .subcommand(
+            Command::new("test")
+                .about("Run JUnit tests")
+                .subcommand_help_heading("TEST")
+        )
         .get_matches();
 
     let lib: String = get_lib_path();
@@ -64,16 +69,19 @@ fn main() {
                 file = args.values_of("file").unwrap().next().unwrap().parse().unwrap();
             }
             run(verbose, &file, &lib);
-        },
+        }
         Some(("build", _)) => {
             build(verbose, &lib, &file);
-        },
+        }
         Some(("doc", _)) => {
             doc();
-        },
+        }
+        Some(("test", _)) => {
+            test();
+        }
         Some(("", _)) => {
             eprintln!("{}", Red.paint("No command specified, try --help"));
-        },
+        }
         _ => {
             println!();
         }
@@ -177,6 +185,50 @@ fn doc() {
 }
 
 
+fn test() {
+    let files = read_dir("./src/test/*.java");
+
+    println!("{} {}", Style::new().bold().paint("[+] Building: "), &files.join(", "));
+
+    let out = exec::new("javac")
+        .arg("-classpath")
+        .arg(get_classpath())
+        .arg("-d")
+        .arg("class/")
+        .arg("-encoding")
+        .arg("UTF-8")
+        .args(&files)
+        .output()
+        .expect("[!] Failed to compile");
+
+    println!("{}", String::from_utf8_lossy(&out.stdout));
+    eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
+
+    if !out.status.success() {
+        eprintln!("{}", Style::new().bold().paint("[!] Build failed"));
+        exit(1);
+    }
+
+    let mut run_files: Vec<String> = Vec::new();
+    for file in files {
+        run_files.push(format_classname(&file));
+    }
+
+    println!("{} {}", Style::new().bold().paint("[+] Running: "), &run_files.join(", "));
+
+    let out = exec::new("java")
+        .arg("-classpath")
+        .arg(get_classpath())
+        .arg("org.junit.runner.JUnitCore")
+        .args(&run_files)
+        .output()
+        .expect("[!] Failed to run");
+
+    println!("{}", String::from_utf8_lossy(&out.stdout));
+    eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
+}
+
+
 fn read_dir(dir: &str) -> Vec<String> {
     let mut files: Vec<String> = Vec::new();
 
@@ -202,10 +254,10 @@ fn get_lib_path() -> String {
 }
 
 fn get_classpath() -> String {
-    let mut path: String = "class;lib\\mysql-connector-java-8.0.29.jar;lib\\annotations-20.1.0.jar".to_string();
+    let mut path: String = "class;lib\\mysql-connector-java-8.0.29.jar;lib\\annotations-20.1.0.jar;lib\\junit-4.13.2.jar:lib\\hamcrest-core-1.3.jar".to_string();
 
     if !cfg!(target_os = "windows") {
-        path = "class:lib/mysql-connector-java-8.0.29.jar:lib/annotations-20.1.0.jar".to_string();
+        path = "class:lib/mysql-connector-java-8.0.29.jar:lib/annotations-20.1.0.jar:lib/junit-4.13.2.jar:lib/hamcrest-core-1.3.jar".to_string();
     }
 
     path
@@ -215,6 +267,14 @@ fn format_filename(file: &String) -> String {
     let mut file: String = file.replace(".", "/");
     if file != "" {
         file = format!("src/{}.java", file)
+    }
+    file
+}
+
+fn format_classname(file: &String) -> String {
+    let mut file: String = file.replace("src/", "").replace(".java", "").replace("/", ".");
+    if file != "" {
+        file = format!("{}", file)
     }
     file
 }
