@@ -74,7 +74,7 @@ fn main() {
             build(verbose, &lib, &file);
         }
         Some(("doc", _)) => {
-            doc();
+            doc(&lib);
         }
         Some(("test", _)) => {
             test(&lib);
@@ -165,7 +165,7 @@ fn run(v: bool, file: &String, lib: &String) {
     eprintln!("{}", Red.paint(String::from_utf8_lossy(&out.stderr)));
 }
 
-fn doc() {
+fn doc(lib: &String) {
     let files: Vec<String> = read_dir("./src/**/*.java");
 
     println!("{} {}", Style::new().bold().paint("[+] Javadoc: "), &files.join(" "));
@@ -175,6 +175,10 @@ fn doc() {
         .arg("doc/")
         .arg("-classpath")
         .arg(get_classpath())
+        .arg("--module-path")
+        .arg(lib)
+        .arg("--add-modules")
+        .arg("javafx.base,javafx.controls,javafx.graphics,javafx.fxml,javafx.media,javafx.swing,javafx.web")
         .arg("-author")
         .args(files)
         .output()
