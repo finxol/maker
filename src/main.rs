@@ -77,7 +77,7 @@ fn main() {
             doc();
         }
         Some(("test", _)) => {
-            test();
+            test(&lib);
         }
         Some(("", _)) => {
             eprintln!("{}", Red.paint("No command specified, try --help"));
@@ -185,7 +185,7 @@ fn doc() {
 }
 
 
-fn test() {
+fn test(lib: &String) {
     let files = read_dir("./src/test/*.java");
 
     println!("{} {}", Style::new().bold().paint("[+] Building: "), &files.join(", "));
@@ -195,6 +195,10 @@ fn test() {
         .arg(get_classpath())
         .arg("-d")
         .arg("class/")
+        .arg("--module-path")
+        .arg(lib)
+        .arg("--add-modules")
+        .arg("javafx.base,javafx.controls,javafx.graphics,javafx.fxml,javafx.media,javafx.swing,javafx.web")
         .arg("-encoding")
         .arg("UTF-8")
         .args(&files)
@@ -219,6 +223,10 @@ fn test() {
     let out = exec::new("java")
         .arg("-classpath")
         .arg(get_classpath())
+        .arg("--module-path")
+        .arg(lib)
+        .arg("--add-modules")
+        .arg("javafx.base,javafx.controls,javafx.graphics,javafx.fxml,javafx.media,javafx.swing,javafx.web")
         .arg("org.junit.runner.JUnitCore")
         .args(&run_files)
         .output()
