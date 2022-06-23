@@ -293,6 +293,8 @@ fn copy_files() {
 
     println!("{} {} {}", Style::new().bold().paint("[+] Copying: "), &comp_files.join(", "), "to class");
 
+    create_dir("class/vue/");
+
     for file in comp_files {
         let split_char = if !cfg!(target_os = "windows") { "/" } else { "\\" };
         let f = file.split(split_char).collect::<Vec<&str>>();
@@ -308,4 +310,11 @@ fn copy_files() {
     }
 
     println!();
+}
+
+
+fn create_dir(dir: &str) {
+    if !Path::new(dir).exists() {
+        fs::create_dir_all(dir).expect(&*format!("Error creating directory {}", dir));
+    }
 }
