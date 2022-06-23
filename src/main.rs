@@ -280,7 +280,7 @@ fn format_filename(file: &String) -> String {
 }
 
 fn format_classname(file: &String) -> String {
-    let mut file: String = file.replace("src/", "").replace(".java", "").replace("/", ".");
+    let mut file: String = file.replace("src/", "").replace("src\\", "").replace(".java", "").replace("/", ".").replace("\\", ".");
     if file != "" {
         file = format!("{}", file)
     }
